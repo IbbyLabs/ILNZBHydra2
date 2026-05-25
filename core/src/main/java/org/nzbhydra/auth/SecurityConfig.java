@@ -111,6 +111,16 @@ public class SecurityConfig {
                     .authenticated()
                     .requestMatchers("/actuator/**")
                     .hasRole("ADMIN")
+                    .requestMatchers(
+                        "/static/index.html",
+                        "/static/main.js",
+                        "/static/runtime.js",
+                        "/static/polyfills.js",
+                        "/static/vendor.js",
+                        "/static/styles.css",
+                        "/static/styles.css.map"
+                    )
+                    .denyAll()
                     .requestMatchers(new AntPathRequestMatcher("/static/**"))
                     .permitAll()
                 .anyRequest()

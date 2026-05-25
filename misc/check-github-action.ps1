@@ -1,7 +1,7 @@
 function Check-LatestGitHubActionRun {
 
     # Set the base URL for the GitHub API
-    $url = "https://api.github.com/repos/theotherp/nzbhydra2/actions/runs"
+    $url = "https://api.github.com/repos/IbbyLabs/NZBHydra2/actions/runs"
 
 
     # Send a GET request to the GitHub API to retrieve the list of workflow runs

@@ -30,6 +30,7 @@ import java.util.stream.Collectors;
 public class ChangelogGeneratorMojo extends AbstractMojo {
 
     public static final HashSet<String> ALLOWED_CHANGE_TYPES = Sets.newHashSet("fix", "feature", "features", "note");
+    private static final String DEFAULT_ISSUES_BASE_URL = "https://github.com/IbbyLabs/NZBHydra2/issues";
     @Parameter(property = "changelogYamlFile", required = true)
     protected File changelogYamlFile;
 
@@ -84,14 +85,32 @@ public class ChangelogGeneratorMojo extends AbstractMojo {
         }
         versionLine += " (" + entry.getDate() + ")";
         lines.add(versionLine);
+        final String issuesBaseUrl = resolveIssuesBaseUrl();
 
         for (ChangelogChangeEntry changeEntry : entry.getChanges()) {
             final String text = renderMarkdownText(changeEntry.getText())
-                    .replaceAll("#(\\d{3,})", "<a href=\"https://github.com/theotherp/nzbhydra2/issues/$1\">#$1</a>");
+                    .replaceAll("#(\\d{3,})", "<a href=\"" + issuesBaseUrl + "/$1\">#$1</a>");
             lines.add("**" + StringUtils.capitalise(changeEntry.getType()) + "** " + text);
         }
         lines.add("");
         return lines;
+    }
+
+    private static String resolveIssuesBaseUrl() {
+        String configured = System.getProperty("githubIssuesBaseUrl");
+        if (StringUtils.isBlank(configured)) {
+            configured = System.getenv("githubIssuesBaseUrl");
+        }
+        if (!StringUtils.isBlank(configured)) {
+            return configured.replaceAll("/+$", "");
+        }
+
+        final String repository = System.getenv("GITHUB_REPOSITORY");
+        if (!StringUtils.isBlank(repository) && repository.contains("/")) {
+            return "https://github.com/" + repository + "/issues";
+        }
+
+        return DEFAULT_ISSUES_BASE_URL;
     }
 
     private static String renderMarkdownText(String text) {

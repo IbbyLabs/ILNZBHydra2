@@ -81,7 +81,7 @@ public class UrlCalculator {
         String hostHeader = request.getHeader("host"); //May look like this: mydomain.com:4000 or like this: mydomain.com
         if (hostHeader == null) {
             host = request.getServerName();
-            logger.warn("Header host not set. Using {}. Please change your reverse proxy configuration. See https://github.com/theotherp/nzbhydra2/wiki/Exposing-Hydra-to-the-internet-and-using-reverse-proxies for more information", host);
+            logger.warn("Header host not set. Using {}. Please change your reverse proxy configuration. See https://github.com/IbbyLabs/NZBHydra2/wiki/Exposing-Hydra-to-the-internet-and-using-reverse-proxies for more information", host);
         } else {
             String[] split = hostHeader.split(":");
             host = split[0];

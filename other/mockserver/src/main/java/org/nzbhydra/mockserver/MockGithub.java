@@ -30,7 +30,7 @@ public class MockGithub {
     public MockGithub() {
         releasev376 = new Release();
         releasev376.setBody("Changes in version 3.16.3");
-        releasev376.setUrl("http://127.0.0.1:5080/repos/theotherp/nzbhydra2/releases/1");
+        releasev376.setUrl("http://127.0.0.1:5080/repos/IbbyLabs/NZBHydra2/releases/1");
         releasev376.setTagName("v5.16.3-SNAPSHOT");
         windowsAsset.setBrowserDownloadUrl("http://127.0.0.1:5080/static/nzbhyra2-2.0.0-SNAPSHOT-windows.zip");
         windowsAsset.setName("nzbhyra2-3.1.0-SNAPSHOT-windows.zip");
@@ -55,24 +55,24 @@ public class MockGithub {
     }
 
 
-    @RequestMapping(value = "/repos/theotherp/nzbhydra2/releases/latest", method = RequestMethod.GET)
+    @RequestMapping(value = "/repos/IbbyLabs/NZBHydra2/releases/latest", method = RequestMethod.GET)
     public Release latestRelease() throws Exception {
         return releasev4pre;
     }
 
-    @RequestMapping(value = "/repos/theotherp/nzbhydra2/releases", method = RequestMethod.GET)
+    @RequestMapping(value = "/repos/IbbyLabs/NZBHydra2/releases", method = RequestMethod.GET)
     public List<Release> releases() throws Exception {
         return releases;
     }
 
-    @RequestMapping(value = "/repos/theotherp/nzbhydra2/releases", method = RequestMethod.POST)
+    @RequestMapping(value = "/repos/IbbyLabs/NZBHydra2/releases", method = RequestMethod.POST)
     public Release postRelease(@RequestBody String body) throws Exception {
         releasev376.setUploadUrl("http://127.0.0.1:5080/upload");
         logger.info(body);
         return releasev376;
     }
 
-    @RequestMapping(value = "/repos/theotherp/nzbhydra2/releases/1", method = RequestMethod.PATCH)
+    @RequestMapping(value = "/repos/IbbyLabs/NZBHydra2/releases/1", method = RequestMethod.PATCH)
     public Release patchRelease(@RequestBody String body) throws Exception {
         releasev376.setDraft(false);
         logger.info(body);
@@ -96,13 +96,13 @@ public class MockGithub {
         );
     }
 
-    @RequestMapping(value = "/theotherp/nzbhydra/master/news.json", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    @RequestMapping(value = "/IbbyLabs/NZBHydra2/master/news.json", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     public String news() throws Exception {
         logger.info("Returning news");
         return new String(Files.readAllBytes(new File("news.json").toPath()));
     }
 
-    @RequestMapping(value = "/theotherp/nzbhydra/master/blockedVersions.json", method = RequestMethod.GET)
+    @RequestMapping(value = "/IbbyLabs/NZBHydra2/master/blockedVersions.json", method = RequestMethod.GET)
     public String blockedVersions() throws Exception {
         logger.info("Returning blocked versions");
         return "[{\"version\":\"3.2.1\",\"comment\":\"some comment\"}]";

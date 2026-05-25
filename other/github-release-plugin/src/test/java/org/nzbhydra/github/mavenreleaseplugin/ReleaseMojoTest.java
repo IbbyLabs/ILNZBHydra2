@@ -30,7 +30,7 @@ public class ReleaseMojoTest extends AbstractMojoTestCase {
 
     public void testExecute() throws Exception {
         MockWebServer server = getMockWebServer();
-        HttpUrl url = server.url("/repos/theotherp/nzbhydra2/releases");
+        HttpUrl url = server.url("/repos/IbbyLabs/NZBHydra2/releases");
 
         //Here the magic happens
         File pom = getTestFile("/src/test/resources/org/nzbhydra/github/mavenreleaseplugin/pomWithToken.xml");
@@ -91,7 +91,7 @@ public class ReleaseMojoTest extends AbstractMojoTestCase {
 
     public void testExecuteWithTokenFile() throws Exception {
         MockWebServer server = getMockWebServer();
-        HttpUrl url = server.url("/repos/theotherp/nzbhydra2/releases");
+        HttpUrl url = server.url("/repos/IbbyLabs/NZBHydra2/releases");
 
         File pom = getTestFile("/src/test/resources/org/nzbhydra/github/mavenreleaseplugin/pomWithTokenFile.xml");
         assertTrue(pom.exists());
@@ -111,7 +111,7 @@ public class ReleaseMojoTest extends AbstractMojoTestCase {
 
     public void testDryRun() throws Exception {
         MockWebServer server = getMockWebServer();
-        HttpUrl url = server.url("/repos/theotherp/nzbhydra2/releases");
+        HttpUrl url = server.url("/repos/IbbyLabs/NZBHydra2/releases");
 
         File pom = getTestFile("/src/test/resources/org/nzbhydra/github/mavenreleaseplugin/pomWithTokenFile.xml");
         assertTrue(pom.exists());
@@ -165,8 +165,8 @@ public class ReleaseMojoTest extends AbstractMojoTestCase {
     private MockWebServer getMockWebServer() throws JsonProcessingException {
         MockWebServer server = new MockWebServer();
         Release draftReleaseResponse = new Release();
-        draftReleaseResponse.setUploadUrl(server.url("/repos/theotherp/nzbhydra2/releases/1/assets").toString());
-        draftReleaseResponse.setUrl(server.url("/repos/theotherp/nzbhydra2/releases/1").toString());
+        draftReleaseResponse.setUploadUrl(server.url("/repos/IbbyLabs/NZBHydra2/releases/1/assets").toString());
+        draftReleaseResponse.setUrl(server.url("/repos/IbbyLabs/NZBHydra2/releases/1").toString());
         draftReleaseResponse.setDraft(true);
 
         ArrayList<Asset> assets = new ArrayList<>();

@@ -296,7 +296,7 @@ function getIndexerBoxFields(indexerModel, parentModel, isInitial, CategoriesSer
             templateOptions: {
                 type: 'text',
                 label: 'Schedule',
-                help: 'Determines when an indexer should be selected. See <a href="https://github.com/theotherp/nzbhydra2/wiki/Indexer-schedules" target="_blank">wiki</a>. You can enter multiple time spans. Apply values with return key.',
+                help: 'Determines when an indexer should be selected. See <a href="https://github.com/IbbyLabs/NZBHydra2/wiki/Indexer-schedules" target="_blank">wiki</a>. You can enter multiple time spans. Apply values with return key.',
                 advanced: true
             }
         }

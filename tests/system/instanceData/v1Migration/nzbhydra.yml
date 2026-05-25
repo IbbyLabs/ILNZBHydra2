@@ -350,7 +350,7 @@ main:
     apiKey: "apikey"
     dereferer: null
     instanceCounterDownloaded: true
-    repositoryBase: "https://github.com/theotherp"
+    repositoryBase: "https://github.com/IbbyLabs"
     shutdownForRestart: false
     useCsrf: true
     xmx: 256

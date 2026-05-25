@@ -269,7 +269,7 @@ public class UpdateManager implements InitializingBean {
         String text = normalizeChangelogText(entry.getText());
         final Matcher matcher = GITHUB_ISSUE_PATTERN.matcher(text);
         if (matcher.find()) {
-            String link = "https://github.com/theotherp/nzbhydra2/issues/" + matcher.group(1);
+            String link = "https://github.com/IbbyLabs/NZBHydra2/issues/" + matcher.group(1);
             if (configProvider.getBaseConfig().getMain().getDereferer().isPresent()) {
                 link = configProvider.getBaseConfig().getMain().getDereferer().get()
                         .replace("$s", UrlEscapers.urlFragmentEscaper().escape(link)

@@ -90,7 +90,7 @@ function hydraChecksFooter() {
                 var data = response.data;
                 if (data !== undefined && data !== null && data) {
                     ModalService.open("Outdated wrappers detected", 'The NZBHydra wrappers (i.e. the executables or python scripts you use to run NZBHydra) seem to be outdated. Please update them.<br><br>\n' +
-                        '      Shut down NZBHydra, <a href="https://github.com/theotherp/nzbhydra2/releases/latest">download the latest version</a> and extract all the relevant wrapper files into your main NZBHydra folder.<br>\n' +
+                        '      Shut down NZBHydra, <a href="https://github.com/IbbyLabs/NZBHydra2/releases/latest">download the latest version</a> and extract all the relevant wrapper files into your main NZBHydra folder.<br>\n' +
                         '      For Windows these files are:\n' +
                         '      <ul>\n' +
                         '        <li>NZBHydra2.exe</li>\n' +

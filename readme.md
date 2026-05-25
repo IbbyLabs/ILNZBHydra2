@@ -1,4 +1,4 @@
-<img src="https://github.com/theotherp/nzbhydra2/raw/master/core/ui-src/img/banner-bright.png" width="50%"/>
+<img src="https://github.com/IbbyLabs/NZBHydra2/raw/master/core/ui-src/img/banner-bright.png" width="50%"/>
 
 NZBHydra 2 is a meta search for newznab indexers and torznab trackers. It provides easy access to newznab indexers and many torznab trackers via Jackett. You can search all your indexers and trackers from one place and use it as an indexer source for tools like Sonarr, Radarr, Lidarr or CouchPotato.
 
@@ -26,7 +26,7 @@ Honest recommendation: If you don't understand what any or most of that means th
 
 ## How to Run
 
-Download the [latest release of NZBHydra 2](https://github.com/theotherp/nzbhydra2/releases/latest) for your platform. Extract it anywhere (the zip does not include a base directory) and start using the
+Download the [latest release of NZBHydra 2](https://github.com/IbbyLabs/NZBHydra2/releases/latest) for your platform. Extract it anywhere (the zip does not include a base directory) and start using the
 appropriate way:
 * On Windows (x64) you can either start `NZBHydra2.exe` which will add a tray icon (give it some time) or `NZBHydra2 Console.exe` which will open a console window.
   * Note: Do *not* use the folders `C:\Program Files` or `C:\Program Files (x86)`.
@@ -45,7 +45,7 @@ After a while your browser should open to http://127.0.0.1:5076.
 
 ### Install as a Service
 
-Please see the [wiki](https://github.com/theotherp/nzbhydra2/wiki/Windows-service-and-Linux-start-scripts).
+Please see the [wiki](https://github.com/IbbyLabs/NZBHydra2/wiki/Windows-service-and-Linux-start-scripts).
 
 ### Stuff you should know
 * Without a "proper" indexer that supports media ID based searches (anything unlike Binsearch, NZBINdex, Anizb, etc) automation tools like Sonarr or Radarr will not work properly
@@ -78,18 +78,15 @@ Please send merge requests to the develop branch!
 
 ## Contact
 
-I prefer "public" communication via [Discord](https://discord.gg/uh9W3rd).
-
-Otherwise send me an email at theotherp@posteo.net
+Please use the GitHub issue tracker: https://github.com/IbbyLabs/NZBHydra2/issues
 
 ## Donate
 
 You're welcome to donate:
   <ul>
     <li>Bitcoin via 1LPCUF9eKEXi58nHbxTbJyfxCJkcCXKzvm</li>
-    <li>Regular money via PayPal to theotherp@posteo.net</li>
     <li><a href="https://buymeacoffee.com/theotherp">Buy me a coffee</a>
-    <li>Via <a href="https://github.com/sponsors/theotherp">GitHub sponsors</a> which involves a recurring donation similar to Patreon.</li>
+    <li>Via <a href="https://github.com/sponsors/IbbyLabs">GitHub sponsors</a> which involves a recurring donation similar to Patreon.</li>
   </ul>
 
 ## Thanks

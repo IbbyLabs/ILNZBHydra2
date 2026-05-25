@@ -118,10 +118,10 @@ public class CapsGenerator {
         capsRoot.setLimits(new CapsXmlLimits(100, 100));
 
         CapsXmlServer capsServer = new CapsXmlServer();
-        capsServer.setEmail("theotherp@posteo.net");
+        capsServer.setEmail("https://github.com/IbbyLabs/NZBHydra2/issues");
         capsServer.setTitle("NZBHydra 2");
-        capsServer.setUrl("https://github.com/theotherp/nzbhydra2");
-        capsServer.setImage("https://raw.githubusercontent.com/theotherp/nzbhydra2/master/core/ui-src/img/banner-bright.png");
+        capsServer.setUrl("https://github.com/IbbyLabs/NZBHydra2");
+        capsServer.setImage("https://raw.githubusercontent.com/IbbyLabs/NZBHydra2/master/core/ui-src/img/banner-bright.png");
         capsRoot.setServer(capsServer);
 
         CapsXmlSearching capsSearching = new CapsXmlSearching();

@@ -1,6 +1,6 @@
 [Unit]
 Description=NZBHydra2 Daemon
-Documentation=https://github.com/theotherp/nzbhydra2
+Documentation=https://github.com/IbbyLabs/NZBHydra2
 After=network.target
 
 [Service]

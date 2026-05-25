@@ -43,8 +43,8 @@ public class NewznabXmlTransformer {
 
         NewznabXmlChannel rssChannel = new NewznabXmlChannel();
         rssChannel.setTitle("NZBHydra 2");
-        rssChannel.setLink("https://www.github.com/theotherp/nzbhydra2");
-        rssChannel.setWebMaster("theotherp@posteo.net");
+        rssChannel.setLink("https://www.github.com/IbbyLabs/NZBHydra2");
+        rssChannel.setWebMaster("https://github.com/IbbyLabs/NZBHydra2/issues");
         if (isNzb) {
             rssChannel.setNewznabResponse(new NewznabXmlResponse(offset == null ? 0 : offset, total));
             rssRoot.setSearchType(NewznabResponse.SearchType.NEWZNAB);

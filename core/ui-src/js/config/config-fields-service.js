@@ -60,7 +60,7 @@ function ConfigFields($injector) {
                                 label: 'Host',
                                 required: true,
                                 placeholder: 'IPv4 address to bind to',
-                                help: 'I strongly recommend <a href="https://github.com/theotherp/nzbhydra2/wiki/Exposing-Hydra-to-the-internet-and-using-reverse-proxies" target="_blank">using a reverse proxy</a> instead of exposing this directly. Requires restart.'
+                                help: 'I strongly recommend <a href="https://github.com/IbbyLabs/NZBHydra2/wiki/Exposing-Hydra-to-the-internet-and-using-reverse-proxies" target="_blank">using a reverse proxy</a> instead of exposing this directly. Requires restart.'
                             },
                             validators: {
                                 ipAddress: ipValidator()
@@ -87,7 +87,7 @@ function ConfigFields($injector) {
                                 type: 'text',
                                 label: 'URL base',
                                 placeholder: '/nzbhydra',
-                                help: 'Adapt when using a reverse proxy. See <a href="https://github.com/theotherp/nzbhydra2/wiki/Exposing-Hydra-to-the-internet-and-using-reverse-proxies" target="_blank">wiki</a>. Always use when calling Hydra, even locally.',
+                                help: 'Adapt when using a reverse proxy. See <a href="https://github.com/IbbyLabs/NZBHydra2/wiki/Exposing-Hydra-to-the-internet-and-using-reverse-proxies" target="_blank">wiki</a>. Always use when calling Hydra, even locally.',
                                 tooltip: 'If you use Hydra behind a reverse proxy you might want to set the URL base to a value like "/nzbhydra". If you accesses Hydra with tools running outside your network (for example from your phone) set the external URL so that it matches the full Hydra URL. That way the NZB links returned in the search results refer to your global URL and not your local address.',
                                 advanced: true
                             },
@@ -115,7 +115,7 @@ function ConfigFields($injector) {
                                 label: 'SSL keystore file',
                                 required: true,
                                 type: "file",
-                                help: 'Requires restart. See <a href="https://github.com/theotherp/nzbhydra2/wiki/SSL" target="_blank">wiki</a>.'
+                                help: 'Requires restart. See <a href="https://github.com/IbbyLabs/NZBHydra2/wiki/SSL" target="_blank">wiki</a>.'
                             }
                         },
                         {
@@ -275,7 +275,7 @@ function ConfigFields($injector) {
                             type: 'horizontalSwitch',
                             templateOptions: {
                                 label: 'Verify SSL certificates',
-                                help: 'If enabled only valid/known SSL certificates will be accepted when accessing indexers. Change requires restart. See <a href="https://github.com/theotherp/nzbhydra2/wiki/SSL-verification-errors" target="_blank">wiki</a>.',
+                                help: 'If enabled only valid/known SSL certificates will be accepted when accessing indexers. Change requires restart. See <a href="https://github.com/IbbyLabs/NZBHydra2/wiki/SSL-verification-errors" target="_blank">wiki</a>.',
                                 advanced: true
                             }
                         },
@@ -305,7 +305,7 @@ function ConfigFields($injector) {
                             templateOptions: {
                                 type: 'text',
                                 label: 'Disable SNI',
-                                help: 'Add a host if you get an "unrecognized_name" error. Apply words with return key. See <a href="https://github.com/theotherp/nzbhydra2/wiki/SSL-verification-errors" target="_blank">wiki</a>.',
+                                help: 'Add a host if you get an "unrecognized_name" error. Apply words with return key. See <a href="https://github.com/IbbyLabs/NZBHydra2/wiki/SSL-verification-errors" target="_blank">wiki</a>.',
                                 advanced: true
                             }
                         },
@@ -701,7 +701,7 @@ function ConfigFields($injector) {
                                     text: 'MB'
                                 },
                                 min: 128,
-                                help: '256 should suffice except when working with big databases / many indexers. See <a href="https://github.com/theotherp/nzbhydra2/wiki/Memory-requirements" target="_blank">wiki</a>.',
+                                help: '256 should suffice except when working with big databases / many indexers. See <a href="https://github.com/IbbyLabs/NZBHydra2/wiki/Memory-requirements" target="_blank">wiki</a>.',
                                 advanced: true
                             }
                         },
@@ -1591,7 +1591,7 @@ function ConfigFields($injector) {
                             templateOptions: {
                                 type: 'number',
                                 label: 'Results cache time',
-                                help: 'When set search results will be cached for this time. Any search with the same parameters will return the cached results. API cache time parameters will be preferred. See <a href="https://github.com/theotherp/nzbhydra2/wiki/External-API,-RSS-and-cached-queries" target="_blank">wiki</a>.',
+                                help: 'When set search results will be cached for this time. Any search with the same parameters will return the cached results. API cache time parameters will be preferred. See <a href="https://github.com/IbbyLabs/NZBHydra2/wiki/External-API,-RSS-and-cached-queries" target="_blank">wiki</a>.',
                                 addonRight: {
                                     text: 'minutes'
                                 }

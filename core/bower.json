@@ -12,7 +12,7 @@
     "indexer",
     "metasearch"
   ],
-  "homepage": "https://github.com/theotherp/nzbhydra2",
+  "homepage": "https://github.com/IbbyLabs/NZBHydra2",
   "private": true,
   "ignore": [
     "**/.*",

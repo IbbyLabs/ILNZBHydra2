@@ -24,7 +24,7 @@ public class DiscordPublisher {
     private static final String TEMPLATE = """
             %s
 
-            Link: https://github.com/theotherp/nzbhydra2/releases/tag/v%s
+            Link: https://github.com/IbbyLabs/NZBHydra2/releases/tag/v%s
             """;
 
 
@@ -87,7 +87,7 @@ public class DiscordPublisher {
 
         for (ChangelogChangeEntry changeEntry : entry.getChanges()) {
             final String text = normalizeLineBreaks(changeEntry.getText())
-                .replaceAll("#(\\d{3,})", "https://github.com/theotherp/nzbhydra2/issues/$1");
+                .replaceAll("#(\\d{3,})", "https://github.com/IbbyLabs/NZBHydra2/issues/$1");
             lines.add("**" + StringUtils.capitalize(changeEntry.getType()) + "** " + text);
         }
         lines.add("");

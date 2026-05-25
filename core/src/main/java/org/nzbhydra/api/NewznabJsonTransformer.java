@@ -44,8 +44,8 @@ public class NewznabJsonTransformer {
         NewznabJsonChannel channel = new NewznabJsonChannel();
 
         channel.setTitle("NZBHydra 2");
-        channel.setLink("https://www.github.com/theotherp/nzbhydra2");
-        channel.setWebMaster("theotherp@posteo.net");
+        channel.setLink("https://www.github.com/IbbyLabs/NZBHydra2");
+        channel.setWebMaster("https://github.com/IbbyLabs/NZBHydra2/issues");
         channel.setResponse(new NewznabJsonChannelResponse(new NewznabJsonResponseAttributes(offset, total)));
         channel.setGenerator("NZBHydra2");
 

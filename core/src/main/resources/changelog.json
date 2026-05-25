@@ -245,7 +245,7 @@
     "text" : "Only show video related quick filter buttons when searching in a TV or movie category. See #732"
   }, {
     "type" : "note",
-    "text" : "I'm currently testing a new version of the database library.  This new version may hopefully be a bit more performant, may result in smaller database files (for those suffering from very larg ones) and / or give me options to fine tune how data is compacted (for those where a lot of IO is produced). Unfortunately it means that the old database needs to be migrated which is always a bit hairy. If you're interested in helping me by testing an alpha version please leave me a note in <a href=\"https://github.com/theotherp/nzbhydra2/issues/764\" target=\"blank\">this github Issue</a>."
+    "text" : "I'm currently testing a new version of the database library.  This new version may hopefully be a bit more performant, may result in smaller database files (for those suffering from very larg ones) and / or give me options to fine tune how data is compacted (for those where a lot of IO is produced). Unfortunately it means that the old database needs to be migrated which is always a bit hairy. If you're interested in helping me by testing an alpha version please leave me a note in <a href=\"https://github.com/IbbyLabs/NZBHydra2/issues/764\" target=\"blank\">this github Issue</a>."
   } ],
   "final" : true
 }, {
@@ -558,7 +558,7 @@
   "date" : "2021-01-31",
   "changes" : [ {
     "type" : "fix",
-    "text" : "Fix a websocket issue when using a reverse proxy. Should've tested that better... If you're running NZBHydra behind a reverse proxy please see https://github.com/theotherp/nzbhydra2/issues/683#issuecomment-770444576."
+    "text" : "Fix a websocket issue when using a reverse proxy. Should've tested that better... If you're running NZBHydra behind a reverse proxy please see https://github.com/IbbyLabs/NZBHydra2/issues/683#issuecomment-770444576."
   } ],
   "final" : true
 }, {
@@ -818,7 +818,7 @@
   "date" : "2020-10-17",
   "changes" : [ {
     "type" : "feature",
-    "text" : "NZBHydra now allows to send and show notifications for certain events. You can request events on the <a href=\"https://github.com/theotherp/nzbhydra2/issues/631\" target=\"blank\">Github Issue</a>."
+    "text" : "NZBHydra now allows to send and show notifications for certain events. You can request events on the <a href=\"https://github.com/IbbyLabs/NZBHydra2/issues/631\" target=\"blank\">Github Issue</a>."
   }, {
     "type" : "fix",
     "text" : "Reduced the percentage of correct results an indexer must return for an ID based search for that ID to be determined to be usable for searches. This will hopefully make the caps check recognize more supported IDs without any false positives."
@@ -1069,7 +1069,7 @@
     "text" : "Make instructions what to update when your wrapper is outdated extra clear: Any wrapper file found in the folder must be updated, not just the one you're using to run hydra. If the message says to extract the ZIP into your nzbhydra folder I mean ALL THE FILES."
   }, {
     "type" : "note",
-    "text" : "I moved my mail address from theotherp@gmx.de to theotherp@posteo.net."
+    "text" : "Support moved to the GitHub issue tracker: https://github.com/IbbyLabs/NZBHydra2/issues"
   } ],
   "final" : true
 }, {
@@ -1481,7 +1481,7 @@
     "text" : "Option to configure folder for backups."
   }, {
     "type" : "feature",
-    "text" : "Option to not send newznab categories for torznab indexers (trackers). See <a href=\"https://github.com/theotherp/nzbhydra2/issues/516\">#516</a>."
+    "text" : "Option to not send newznab categories for torznab indexers (trackers). See <a href=\"https://github.com/IbbyLabs/NZBHydra2/issues/516\">#516</a>."
   }, {
     "type" : "note",
     "text" : "Previously a couple of settings (Time of last backup, time of first start, latest news shown, etc.) were stored in the database. That meant they were lost when starting with a new database. I've moved the settings to the config file wherey they belong."
@@ -2090,7 +2090,7 @@
   "date" : "2019-10-06",
   "changes" : [ {
     "type" : "feature",
-    "text" : "I've added a new statistics value called \"Indexer result uniqueness score\" (which is is a mouthful, if you have a better name please let me know). This score attempts to answer the question: Which indexer should I keep and which can I let go? See <a href=\"https://github.com/theotherp/nzbhydra2/wiki/Indexer-results-uniqueness-score\">the wiki for more information</a>. The score will only work for new downloads."
+    "text" : "I've added a new statistics value called \"Indexer result uniqueness score\" (which is is a mouthful, if you have a better name please let me know). This score attempts to answer the question: Which indexer should I keep and which can I let go? See <a href=\"https://github.com/IbbyLabs/NZBHydra2/wiki/Indexer-results-uniqueness-score\">the wiki for more information</a>. The score will only work for new downloads."
   } ],
   "final" : true
 }, {
@@ -2301,7 +2301,7 @@
   "date" : "2019-04-27",
   "changes" : [ {
     "type" : "fix",
-    "text" : "I used a discord invitation link that expires after one day. Use this one: [https://discord.gg/uh9W3rd](https://discord.gg/uh9W3rd)."
+    "text" : "Support and discussion are tracked in GitHub issues: [https://github.com/IbbyLabs/NZBHydra2/issues](https://github.com/IbbyLabs/NZBHydra2/issues)."
   } ],
   "final" : true
 }, {
@@ -2332,7 +2332,7 @@
     "text" : "The python wrapper nzbhydra2wrapper.py which is the main entry point for the program is now included in the linux release. If you start Hydra using that python file it will be updated automatically although changes will only take effect after the next restart of the main process."
   }, {
     "type" : "note",
-    "text" : "I was asked for a discord channel. This is it: [https://discord.gg/uh9W3rd](https://discord.gg/uh9W3rd). I can't promise I'll be the regularly but feel free to join. Some users there and on reddit are always willing to help (thanks, guys!)."
+    "text" : "Support requests and questions should go to GitHub issues: [https://github.com/IbbyLabs/NZBHydra2/issues](https://github.com/IbbyLabs/NZBHydra2/issues)."
   } ],
   "final" : true
 }, {
@@ -2771,7 +2771,7 @@
   "date" : "2018-12-28",
   "changes" : [ {
     "type" : "feature",
-    "text" : "Allow retrieval of history and stats via API. See https://github.com/theotherp/nzbhydra2/wiki/External-API,-RSS-and-cached-queries"
+    "text" : "Allow retrieval of history and stats via API. See https://github.com/IbbyLabs/NZBHydra2/wiki/External-API,-RSS-and-cached-queries"
   }, {
     "type" : "fix",
     "text" : "Repeat of searches from history sometimes used wrong parameters"
@@ -3152,7 +3152,7 @@
     "text" : "Error with TMDB IDs introduced with last version"
   }, {
     "type" : "note",
-    "text" : "In some cases long running instances of Hydra use a lot of CPU when they should be idle. I've made some changes which should reduce the problem to a degree. Please let me know at https://github.com/theotherp/nzbhydra2/issues/96 if you have similar problems or, even better, if they've gone away with this version"
+    "text" : "In some cases long running instances of Hydra use a lot of CPU when they should be idle. I've made some changes which should reduce the problem to a degree. Please let me know at https://github.com/IbbyLabs/NZBHydra2/issues/96 if you have similar problems or, even better, if they've gone away with this version"
   } ],
   "final" : true
 }, {
@@ -3500,7 +3500,7 @@
   "date" : "2018-01-15",
   "changes" : [ {
     "type" : "feature",
-    "text" : "Completely rewrote handling of scheme, port, host and context path. Should solve some issues and prevent others from happening where reverse proxies are involved. Also extended the <a href=\"https://github.com/theotherp/nzbhydra2/wiki/Exposing-Hydra-to-the-internet-and-using-reverse-proxies\">Wiki</a>. There's no need to set an external URL anymore. Please report back if this causes any issues"
+    "text" : "Completely rewrote handling of scheme, port, host and context path. Should solve some issues and prevent others from happening where reverse proxies are involved. Also extended the <a href=\"https://github.com/IbbyLabs/NZBHydra2/wiki/Exposing-Hydra-to-the-internet-and-using-reverse-proxies\">Wiki</a>. There's no need to set an external URL anymore. Please report back if this causes any issues"
   }, {
     "type" : "note",
     "text" : "I'll remove the option to send links to downloaders in one of the coming versions. Only upload of NZBs to downloaders will be supported. v2 is capable of handling it without issues and it allows for better control and upload status recognition"

@@ -114,7 +114,7 @@ If you don't need Java for anything else feel free to uninstall it.
 
 ### How to get support
 
-If anything fails you can always switch back to the old folder or docker image until whatever issue you have is fixed. Then see https://github.com/theotherp/nzbhydra2/issues.
+If anything fails you can always switch back to the old folder or docker image until whatever issue you have is fixed. Then see https://github.com/IbbyLabs/NZBHydra2/issues.
 
 - If NZBHydra starts please attach the debug infos ZIP.
 - If NZBHydra does not start please attach the `.log` files from the `data/logs` folder.

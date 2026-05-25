@@ -17,6 +17,7 @@ import json
 import os
 import platform
 import signal
+import shutil
 import subprocess
 import sys
 import time
@@ -26,6 +27,7 @@ from datetime import datetime
 from enum import Enum
 from pathlib import Path
 from typing import Callable
+import json
 
 import click
 from rich.console import Console
@@ -90,9 +92,104 @@ if hasattr(signal, "SIGTERM"):
 
 PROJECT_ROOT = Path(__file__).parent.parent
 STATE_FILE = PROJECT_ROOT / "misc" / ".build-release-state.json"
-GITHUB_RELEASES_URL = "https://api.github.com/repos/theotherp/nzbhydra2/releases"
+
+
+def _extract_github_slug(remote_url: str) -> str | None:
+    """Extract owner/repo from common GitHub remote URL formats."""
+    cleaned = remote_url.strip()
+    if not cleaned:
+        return None
+
+    # git@github.com:owner/repo.git
+    if cleaned.startswith("git@github.com:"):
+        slug = cleaned.split(":", 1)[1]
+        return slug[:-4] if slug.endswith(".git") else slug
+
+    # https://github.com/owner/repo(.git)
+    marker = "github.com/"
+    if marker in cleaned:
+        slug = cleaned.split(marker, 1)[1]
+        return slug[:-4] if slug.endswith(".git") else slug
+
+    return None
+
+
+def _resolve_repository_slug() -> str:
+    """Resolve owner/repo for the current release target."""
+    explicit = os.getenv("RELEASE_REPOSITORY", "").strip()
+    if explicit and "/" in explicit:
+        return explicit
+
+    gh_repo = os.getenv("GITHUB_REPOSITORY", "").strip()
+    if gh_repo and "/" in gh_repo:
+        return gh_repo
+
+    for remote_name in ("fork", "origin"):
+        try:
+            result = subprocess.run(
+                ["git", "config", "--get", f"remote.{remote_name}.url"],
+                cwd=PROJECT_ROOT,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            if result.returncode != 0:
+                continue
+            slug = _extract_github_slug(result.stdout.strip())
+            if slug and "/" in slug:
+                return slug
+        except Exception:
+            continue
+
+    return "IbbyLabs/NZBHydra2"
+
+
+def _resolve_github_releases_url() -> str:
+    """Resolve GitHub releases API URL for this repository."""
+    explicit_url = os.getenv("GITHUB_RELEASES_URL", "").strip()
+    if explicit_url:
+        return explicit_url
+    slug = _resolve_repository_slug()
+    return f"https://api.github.com/repos/{slug}/releases"
+
+
+def _resolve_github_issues_url(repository_slug: str) -> str:
+    """Resolve GitHub issues base URL for markdown issue links."""
+    explicit_url = os.getenv("GITHUB_ISSUES_URL", "").strip()
+    if explicit_url:
+        return explicit_url.rstrip("/")
+    return f"https://github.com/{repository_slug}/issues"
+
+
+def _resolve_docker_image(repository_slug: str) -> str:
+    """Resolve Docker image repository for multi-arch publishing."""
+    explicit_image = os.getenv("DOCKER_IMAGE", "").strip()
+    if explicit_image:
+        return explicit_image
+    return f"ghcr.io/{repository_slug.lower()}"
+
+
+REPOSITORY_SLUG = _resolve_repository_slug()
+GITHUB_RELEASES_URL = _resolve_github_releases_url()
+GITHUB_ISSUES_URL = _resolve_github_issues_url(REPOSITORY_SLUG)
+DOCKER_IMAGE = _resolve_docker_image(REPOSITORY_SLUG)
 
 console = Console()
+
+
+def _resolve_java_executable() -> str | None:
+    """Return a usable Java executable path, preferring PATH then JAVA_HOME."""
+    java_path = shutil.which("java")
+    if java_path:
+        return java_path
+
+    java_home = os.getenv("JAVA_HOME", "").strip()
+    if java_home:
+        java_candidate = Path(java_home) / "bin" / ("java.exe" if platform.system() == "Windows" else "java")
+        if java_candidate.exists():
+            return str(java_candidate)
+
+    return None
 
 
 class DryRunMode(Enum):
@@ -125,6 +222,7 @@ class BuildContext:
     dry_run: DryRunMode
     log_file: Path
     skip_preconditions: bool = False
+    skip_executables_check: bool = True
     github_token: str | None = None
     discord_token: str | None = None
     completed_steps: list[str] = field(default_factory=list)
@@ -195,6 +293,113 @@ def _increment_patch_version(version: str) -> str:
         raise ValueError(f"Cannot auto-increment version '{version}': expected format X.Y.Z")
     parts[2] = str(int(parts[2]) + 1)
     return ".".join(parts)
+
+def _run_quiet(cmd: list[str], cwd: Path) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(cmd, cwd=cwd, capture_output=True, text=True, check=False)
+
+def _fetch_latest_release_tag(ctx: "BuildContext") -> str | None:
+    """Fetch latest release tag from configured GitHub releases API."""
+    if not ctx.github_token:
+        return None
+    result = _run_quiet(
+        [
+            "curl",
+            "-fsSL",
+            "-H",
+            f"Authorization: token {ctx.github_token}",
+            f"{GITHUB_RELEASES_URL}?per_page=50",
+        ],
+        PROJECT_ROOT,
+    )
+    if result.returncode != 0 or not result.stdout.strip():
+        return None
+    try:
+        payload = json.loads(result.stdout)
+    except json.JSONDecodeError:
+        return None
+    if not isinstance(payload, list):
+        return None
+    for entry in payload:
+        tag = (entry or {}).get("tag_name")
+        if isinstance(tag, str) and tag.startswith("v"):
+            return tag
+    return None
+
+def _classify_change(subject: str) -> tuple[str, str]:
+    text = subject.strip()
+    low = text.lower()
+    if low.startswith(("feat:", "feat(", "feature:")):
+        return "feature", text.split(":", 1)[1].strip() if ":" in text else text
+    if low.startswith(("fix:", "fix(", "bug:", "hotfix:")):
+        return "fix", text.split(":", 1)[1].strip() if ":" in text else text
+    return "note", text
+
+def _collect_change_candidates(ctx: "BuildContext") -> list[tuple[str, str]]:
+    last_tag = _fetch_latest_release_tag(ctx)
+    range_expr = f"{last_tag}..HEAD" if last_tag else "HEAD"
+    cmd = ["git", "log", "--pretty=%s", range_expr]
+    if not last_tag:
+        cmd = ["git", "log", "-n", "25", "--pretty=%s", "HEAD"]
+    result = _run_quiet(cmd, PROJECT_ROOT)
+    if result.returncode != 0:
+        return []
+
+    seen: set[str] = set()
+    changes: list[tuple[str, str]] = []
+    for raw in result.stdout.splitlines():
+        subject = raw.strip()
+        if not subject or subject.lower().startswith("merge "):
+            continue
+        change_type, text = _classify_change(subject)
+        normalized = text.strip()
+        if not normalized:
+            continue
+        key = f"{change_type}:{normalized.lower()}"
+        if key in seen:
+            continue
+        seen.add(key)
+        changes.append((change_type, normalized))
+        if len(changes) >= 15:
+            break
+    return changes
+
+def _to_yaml_safe_text(text: str) -> str:
+    return text.replace("\\", "\\\\").replace('"', '\\"')
+
+def _prepend_changelog_entry(ctx: "BuildContext") -> None:
+    changelog_path = PROJECT_ROOT / "core" / "src" / "main" / "resources" / "changelog.yaml"
+    if not changelog_path.exists():
+        raise FileNotFoundError(f"Missing changelog file: {changelog_path}")
+
+    content = changelog_path.read_text(encoding="utf-8")
+    version_marker = f'version: "v{ctx.version}"'
+    if version_marker in content:
+        console.print(f"  [dim]Changelog already has v{ctx.version}; skipping auto-entry[/dim]")
+        return
+
+    changes = _collect_change_candidates(ctx)
+    if not changes:
+        changes = [("note", "Automated release update.")]
+
+    date_str = datetime.now().strftime("%Y-%m-%d")
+    lines = [
+        f'-   version: "v{ctx.version}"',
+        f'    date: "{date_str}"',
+        "    final: false",
+        "    changes:",
+    ]
+    for change_type, text in changes:
+        lines.append(f'      -   type: "{change_type}"')
+        lines.append(f'          text: "{_to_yaml_safe_text(text)}"')
+    entry_block = "\n".join(lines)
+
+    formatter_prefix = "#@formatter:off"
+    body = content
+    if content.startswith(formatter_prefix):
+        body = content[len(formatter_prefix):].lstrip("\n")
+    new_content = f"{formatter_prefix}\n{entry_block}\n{body}"
+    changelog_path.write_text(new_content, encoding="utf-8")
+    console.print(f"  [green]✓[/green] Added auto changelog entry for v{ctx.version}")
 
 
 # ---------------------------------------------------------------------------
@@ -497,7 +702,7 @@ def step(name: str, description: str, *, is_remote: bool = False):
 # ---------------------------------------------------------------------------
 
 
-@step("load_tokens", "Load GitHub and Discord tokens")
+@step("load_tokens", "Load GitHub token and optional Discord token")
 def load_tokens(ctx: BuildContext) -> None:
     """Load authentication tokens from files."""
     discord_token_file = PROJECT_ROOT / "discordtoken.txt"
@@ -507,7 +712,7 @@ def load_tokens(ctx: BuildContext) -> None:
         ctx.discord_token = discord_token_file.read_text().strip()
         console.print("  [green]✓[/green] Discord token loaded")
     else:
-        raise FileNotFoundError(f"Discord token file not found: {discord_token_file}")
+        console.print("  [yellow]⚠[/yellow] Discord token not found; Discord publish will be skipped")
 
     if github_token_file.exists():
         ctx.github_token = github_token_file.read_text().strip()
@@ -563,6 +768,15 @@ def check_preconditions(ctx: BuildContext) -> None:
             raise RuntimeError(f"Git has untracked or changed files:\n{result.stdout}")
         console.print("  [green]✓[/green] Git working directory is clean")
 
+    # Check Java runtime is available for release verification steps
+    if ctx.dry_run.should_execute_local():
+        java_executable = _resolve_java_executable()
+        if not java_executable:
+            raise RuntimeError(
+                "Java runtime not found. Install a JRE/JDK or set JAVA_HOME so 'java' is available."
+            )
+        console.print(f"  [green]✓[/green] Java runtime available ({java_executable})")
+
     # Check Docker is running (for Linux builds)
     if ctx.is_windows and ctx.dry_run.should_execute_local():
         result = run_wsl_command(
@@ -586,16 +800,36 @@ def set_release_version(ctx: BuildContext) -> None:
     )
 
 
+@step("install_release_plugin", "Install local GitHub release plugin")
+def install_release_plugin(ctx: BuildContext) -> None:
+    """Build and install the local github-release-plugin so script changes are effective immediately."""
+    run_command(
+        ctx,
+        ["mvn", "-q", "-B", "-pl", "other/github-release-plugin", "-am", "install", "-DskipTests=true"],
+        "Installing local github-release-plugin",
+    )
+
+@step("auto_changelog_entry", "Auto-generate changelog entry")
+def auto_changelog_entry(ctx: BuildContext) -> None:
+    """Create changelog YAML entry from recent commits if missing."""
+    _prepend_changelog_entry(ctx)
+
+
 @step("maven_precheck", "Run Maven precheck")
 def maven_precheck(ctx: BuildContext) -> None:
     """Run the GitHub release plugin precheck."""
     env = {
         "GITHUB_TOKEN": ctx.github_token or "",
         "githubReleasesUrl": GITHUB_RELEASES_URL,
+        "githubIssuesBaseUrl": GITHUB_ISSUES_URL,
+        "GITHUB_REPOSITORY": REPOSITORY_SLUG,
     }
+    cmd = ["mvn", "-q", "-B", "org.nzbhydra:github-release-plugin:3.0.0:precheck"]
+    if ctx.skip_executables_check:
+        cmd.append("-DskipExecutablesCheck=true")
     run_command(
         ctx,
-        ["mvn", "-q", "-B", "org.nzbhydra:github-release-plugin:3.0.0:precheck"],
+        cmd,
         "Running precheck",
         env=env,
     )
@@ -607,6 +841,8 @@ def generate_changelog(ctx: BuildContext) -> None:
     env = {
         "GITHUB_TOKEN": ctx.github_token or "",
         "githubReleasesUrl": GITHUB_RELEASES_URL,
+        "githubIssuesBaseUrl": GITHUB_ISSUES_URL,
+        "GITHUB_REPOSITORY": REPOSITORY_SLUG,
     }
     run_command(
         ctx,
@@ -619,16 +855,7 @@ def generate_changelog(ctx: BuildContext) -> None:
 @step("generate_wrapper_hashes", "Generate wrapper hashes")
 def generate_wrapper_hashes(ctx: BuildContext) -> None:
     """Generate wrapper hashes using the GitHub release plugin."""
-    env = {
-        "GITHUB_TOKEN": ctx.github_token or "",
-        "githubReleasesUrl": GITHUB_RELEASES_URL,
-    }
-    run_command(
-        ctx,
-        ["mvn", "-q", "-B", "org.nzbhydra:github-release-plugin:3.0.0:generate-wrapper-hashes"],
-        "Generating wrapper hashes",
-        env=env,
-    )
+    console.print("  [yellow]↷[/yellow] Skipping wrapper hashes (Docker-only release mode)")
 
 
 @step("commit_maven_versions", "Commit Maven version changes")
@@ -683,7 +910,7 @@ def build_core_jar(ctx: BuildContext) -> None:
             "-B",
             "-T",
             "1C",
-            "-DskipTests=true",
+            "-Dmaven.test.skip=true",
         ],
         "Building core modules",
     )
@@ -707,9 +934,23 @@ def build_core_jar(ctx: BuildContext) -> None:
 def verify_generic_version(ctx: BuildContext) -> None:
     """Verify the generic release JAR reports the correct version."""
     jar_path = PROJECT_ROOT / "releases" / "generic-release" / "include" / f"core-{ctx.version}-exec.jar"
+    if ctx.dry_run.should_execute_local() and not jar_path.exists():
+        source_jar = PROJECT_ROOT / "core" / "target" / f"core-{ctx.version}-exec.jar"
+        if source_jar.exists():
+            jar_path.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy(source_jar, jar_path)
+            console.print(f"  [yellow]⚠[/yellow] Restored missing staged JAR from {source_jar}")
+        else:
+            raise FileNotFoundError(
+                f"Generic release JAR is missing ({jar_path}) and source artifact was not found ({source_jar}). "
+                "Run from build_core_jar or rerun the build step."
+            )
+    java_executable = _resolve_java_executable()
+    if not java_executable:
+        raise RuntimeError("Java runtime not found for generic version verification")
     result = run_command(
         ctx,
-        ["java", "-jar", str(jar_path), "-version"],
+        [java_executable, "-jar", str(jar_path), "--version"],
         "Checking generic release version",
     )
     if result:
@@ -846,6 +1087,9 @@ def _build_linux_arm64(ctx: BuildContext, log_file: Path) -> str | None:
 @step("build_native_executables", "Build native executables (Windows + Linux amd64 + Linux arm64 in parallel)")
 def build_native_executables(ctx: BuildContext) -> None:
     """Build Windows and Linux executables in parallel (3 concurrent builds)."""
+    console.print("  [yellow]↷[/yellow] Skipping native executable builds (Docker-only release mode)")
+    return
+
     # Create separate log files for parallel builds
     log_dir = ctx.log_file.parent
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -910,20 +1154,69 @@ def build_native_executables(ctx: BuildContext) -> None:
 @step("build_release_packages", "Build release packages")
 def build_release_packages(ctx: BuildContext) -> None:
     """Build all release packages (Windows, generic, Linux amd64, Linux arm64)."""
+    console.print("  [yellow]↷[/yellow] Skipping release package build (Docker-only release mode)")
+
+
+@step("docker_publish_multiarch", "Publish multi-arch Docker image", is_remote=True)
+def docker_publish_multiarch(ctx: BuildContext) -> None:
+    """Build and publish Docker image for linux/amd64 and linux/arm64."""
+    if not ctx.github_token:
+        raise RuntimeError("GITHUB token is required for Docker registry login")
+
+    owner = REPOSITORY_SLUG.split("/", 1)[0]
+    image_version_tag = f"{DOCKER_IMAGE}:v{ctx.version}"
+    image_latest_tag = f"{DOCKER_IMAGE}:latest"
+    env = {
+        "GITHUB_TOKEN": ctx.github_token,
+        "REGISTRY_USER": os.getenv("DOCKER_REGISTRY_USER", owner),
+    }
+
     run_command(
         ctx,
         [
-            "mvn",
-            "-q",
-            "-pl",
-            "org.nzbhydra:windows-release,org.nzbhydra:generic-release,org.nzbhydra:linux-amd64-release,org.nzbhydra:linux-arm64-release",
-            "clean",
-            "install",
-            "-T",
-            "1C",
-            "-DskipTests=true",
+            "bash",
+            "-lc",
+            "printf '%s' \"$GITHUB_TOKEN\" | docker login ghcr.io -u \"$REGISTRY_USER\" --password-stdin",
         ],
-        "Building release packages",
+        "Logging in to ghcr.io",
+        env=env,
+        is_remote=True,
+    )
+    run_command(
+        ctx,
+        [
+            "bash",
+            "-lc",
+            "docker buildx create --name nzbhydra-release-builder --use >/dev/null 2>&1 || docker buildx use nzbhydra-release-builder",
+        ],
+        "Preparing docker buildx builder",
+        is_remote=True,
+    )
+    run_command(
+        ctx,
+        ["docker", "buildx", "inspect", "--bootstrap"],
+        "Bootstrapping docker buildx",
+        is_remote=True,
+    )
+    run_command(
+        ctx,
+        [
+            "docker",
+            "buildx",
+            "build",
+            "--platform",
+            "linux/amd64,linux/arm64",
+            "-f",
+            "Dockerfile",
+            "-t",
+            image_version_tag,
+            "-t",
+            image_latest_tag,
+            "--push",
+            ".",
+        ],
+        f"Publishing multi-arch image {DOCKER_IMAGE}",
+        is_remote=True,
     )
 
 
@@ -932,7 +1225,7 @@ def git_commit(ctx: BuildContext) -> None:
     """Commit the release changes to git."""
     run_command(
         ctx,
-        ["git", "commit", "-am", f"Update to {ctx.version}"],
+        ["git", "commit", "-am", f"chore: release {ctx.version}"],
         f"Committing release {ctx.version}",
         is_remote=True,  # Skip in local dry run mode
     )
@@ -941,10 +1234,37 @@ def git_commit(ctx: BuildContext) -> None:
 @step("git_tag", "Create git tag", is_remote=False)
 def git_tag(ctx: BuildContext) -> None:
     """Create a git tag for the release."""
+    tag_name = f"v{ctx.version}"
+
+    # LOCAL dry-run should not mutate git state.
+    if ctx.dry_run == DryRunMode.LOCAL:
+        console.print(f"  [yellow]↷[/yellow] Skipping git tag creation in LOCAL mode ({tag_name})")
+        return
+
+    existing_tag = run_command(
+        ctx,
+        ["git", "rev-parse", "-q", "--verify", f"refs/tags/{tag_name}"],
+        f"Checking if tag {tag_name} exists",
+        check=False,
+    )
+
+    if existing_tag and existing_tag.returncode == 0:
+        head_commit = run_command(ctx, ["git", "rev-parse", "HEAD"], "Resolving current HEAD")
+        tag_commit = run_command(ctx, ["git", "rev-list", "-n", "1", tag_name], f"Resolving {tag_name} commit")
+
+        if head_commit and tag_commit and head_commit.stdout.strip() == tag_commit.stdout.strip():
+            console.print(f"  [green]✓[/green] Tag {tag_name} already exists at HEAD; skipping")
+            return
+
+        raise RuntimeError(
+            f"Tag {tag_name} already exists on a different commit. "
+            f"Delete it manually if you want to recreate this release tag."
+        )
+
     run_command(
         ctx,
-        ["git", "tag", "-a", f"v{ctx.version}", "-m", f"v{ctx.version}"],
-        f"Creating tag v{ctx.version}",
+        ["git", "tag", "-a", tag_name, "-m", tag_name],
+        f"Creating tag {tag_name}",
     )
 
 
@@ -959,7 +1279,7 @@ def git_push(ctx: BuildContext) -> None:
     )
     run_command(
         ctx,
-        ["git", "push", "origin", f"v{ctx.version}"],
+        ["git", "push", "fork", f"v{ctx.version}"],
         f"Pushing tag v{ctx.version}",
         is_remote=True,
     )
@@ -971,11 +1291,15 @@ def github_release(ctx: BuildContext) -> None:
     env = {
         "GITHUB_TOKEN": ctx.github_token or "",
         "githubReleasesUrl": GITHUB_RELEASES_URL,
+        "githubIssuesBaseUrl": GITHUB_ISSUES_URL,
+        "GITHUB_REPOSITORY": REPOSITORY_SLUG,
     }
 
     cmd = ["mvn", "-B", "org.nzbhydra:github-release-plugin:3.0.0:release"]
     if ctx.dry_run == DryRunMode.LOCAL:
         cmd.append("-DdryRun")
+    if ctx.skip_executables_check:
+        cmd.append("-DskipExecutablesCheck=true")
 
     run_command(
         ctx,
@@ -992,6 +1316,14 @@ def discord_publish(ctx: BuildContext) -> None:
     changelog_path = PROJECT_ROOT / "core" / "src" / "main" / "resources" / "changelog.yaml"
     discord_jar = PROJECT_ROOT / "other" / "discord-releaser" / "target" / "discordreleaser-jar-with-dependencies.jar"
     token_file = PROJECT_ROOT / "discordtoken.txt"
+
+    if not ctx.discord_token:
+        console.print("  [yellow]↷[/yellow] Skipping Discord publish (no Discord token configured)")
+        return
+
+    if not discord_jar.exists():
+        console.print(f"  [yellow]↷[/yellow] Skipping Discord publish (missing jar: {discord_jar})")
+        return
 
     # In LOCAL mode, pass true for dry run
     dry_run_arg = "true" if ctx.dry_run == DryRunMode.LOCAL else "false"
@@ -1240,6 +1572,7 @@ def run_build(
 @click.option("--clear-state", is_flag=True, help="Clear saved state and exit")
 @click.option("--reset-changes", is_flag=True, help="Reset all build changes (changelog.md, pom.xml files, wrapperHashes2.json) and exit")
 @click.option("--skip-preconditions", is_flag=True, help="Skip precondition checks (git clean, docker running, etc.)")
+@click.option("--skip-executables-check", is_flag=True, help="Skip release plugin executable freshness check")
 def main(
     version: str | None,
     next_version: str | None,
@@ -1250,6 +1583,7 @@ def main(
     clear_state: bool,
     reset_changes: bool,
     skip_preconditions: bool,
+    skip_executables_check: bool,
 ) -> None:
     """Build and release NZBHydra2."""
     os.chdir(PROJECT_ROOT)
@@ -1275,6 +1609,7 @@ def main(
             console.print("[red]No saved state found to resume from.[/red]")
             raise SystemExit(1)
         ctx.skip_preconditions = skip_preconditions
+        ctx.skip_executables_check = skip_executables_check
         console.print(f"[green]Resuming build for version {ctx.version}[/green]")
         console.print(f"[dim]Completed steps: {', '.join(ctx.completed_steps)}[/dim]")
         run_build(ctx)
@@ -1300,6 +1635,7 @@ def main(
         dry_run=dry_run_mode,
         log_file=_create_log_file_path(),
         skip_preconditions=skip_preconditions,
+        skip_executables_check=skip_executables_check,
     )
 
     # Clean up old build logs

@@ -28,7 +28,7 @@ public class SetReleaseFinalMojoTest extends AbstractMojoTestCase {
 
     public void testExecute() throws Exception {
         MockWebServer server = getMockWebServer();
-        HttpUrl url = server.url("/repos/theotherp/nzbhydra2/releases");
+        HttpUrl url = server.url("/repos/IbbyLabs/NZBHydra2/releases");
 
         //Here the magic happens
         File pom = getTestFile("/src/test/resources/org/nzbhydra/github/mavenreleaseplugin/setReleaseToFinalPom.xml");
@@ -57,7 +57,7 @@ public class SetReleaseFinalMojoTest extends AbstractMojoTestCase {
         listReleaseResponse.setPrerelease(true);
         listReleaseResponse.setName("v1.0.0");
         listReleaseResponse.setBody("body");
-        listReleaseResponse.setUrl(server.url("/repos/theotherp/nzbhydra2/releases/1").toString());
+        listReleaseResponse.setUrl(server.url("/repos/IbbyLabs/NZBHydra2/releases/1").toString());
 
         MockResponse releaseMockResponse = new MockResponse()
                 .setResponseCode(200)

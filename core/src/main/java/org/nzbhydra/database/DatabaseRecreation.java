@@ -28,6 +28,7 @@ import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -76,7 +77,20 @@ public class DatabaseRecreation {
             if (header.contains("format:1")) {
                 logger.info("Determined existing database to be version 1.4. Migration needed.");
             } else if (header.contains("format:2")) {
-                logger.info("Determined existing database to be version 2. No migration needed.");
+                logger.info("Determined existing database to be version 2. Checking compatibility with current runtime.");
+                final SQLException compatibilityException = checkDatabaseConnection(dbConnectionUrl);
+                if (compatibilityException == null) {
+                    logger.info("Version 2 database is compatible with current runtime. No migration needed.");
+                    return;
+                }
+                if (!isFormat2ToFormat3CompatibilityIssue(compatibilityException)) {
+                    throw new RuntimeException("Unable to open database file " + databaseFile, compatibilityException);
+                }
+                logger.info("Detected H2 format incompatibility. Starting automatic migration from format 2 to format 3.");
+                migrateToH2v3(databaseFile, dbConnectionUrl);
+                return;
+            } else if (header.contains("format:3")) {
+                logger.info("Determined existing database to be version 3. No migration needed.");
                 return;
             } else {
                 logger.error("Unable to determine database version from header {}", header);
@@ -159,6 +173,69 @@ public class DatabaseRecreation {
                 }
                 throw new RuntimeException(e);
             }
+        }
+    }
+
+    private static SQLException checkDatabaseConnection(String dbConnectionUrl) {
+        try (Connection ignored = DriverManager.getConnection(dbConnectionUrl, "sa", "sa")) {
+            return null;
+        } catch (SQLException firstException) {
+            try (Connection ignored = DriverManager.getConnection(dbConnectionUrl, "sa", "")) {
+                return null;
+            } catch (SQLException secondException) {
+                secondException.addSuppressed(firstException);
+                return secondException;
+            }
+        }
+    }
+
+    private static boolean isFormat2ToFormat3CompatibilityIssue(SQLException compatibilityException) {
+        String message = compatibilityException.getMessage();
+        if (message == null) {
+            return false;
+        }
+        return message.contains("Unsupported database file version")
+            || message.contains("write format 2 is smaller than the supported format 3")
+            || message.contains("90048");
+    }
+
+    private static void migrateToH2v3(File databaseFile, String dbConnectionUrl) throws Exception {
+        File backupDatabaseFile = null;
+        final String javaExecutable = getJavaExecutable();
+        final File h2OldJar = downloadJarFile("https://repo1.maven.org/maven2/com/h2database/h2/2.1.214/h2-2.1.214.jar");
+        final File scriptFile = Files.createTempFile("nzbhydra-h2v3", ".sql").toFile();
+        scriptFile.deleteOnExit();
+        final String scriptFilePath = scriptFile.getCanonicalPath();
+
+        try {
+            backupDatabaseFile = new File(databaseFile.getParent(), databaseFile.getName() + ".old.bak." + System.currentTimeMillis());
+            logger.info("Copying old database file {} to backup {}", databaseFile, backupDatabaseFile);
+            Files.copy(databaseFile.toPath(), backupDatabaseFile.toPath());
+
+            exportDatabaseWithOldH2(dbConnectionUrl, javaExecutable, h2OldJar, scriptFilePath);
+
+            if (!databaseFile.delete()) {
+                throw new RuntimeException("Unable to delete old database file " + databaseFile);
+            }
+
+            runH2Command(Arrays.asList(javaExecutable, "-Xmx700M", "-cp", System.getProperty("java.class.path"), "org.h2.tools.RunScript", "-url", dbConnectionUrl, "-user", "sa", "-password", "sa", "-script", scriptFilePath), "Database import failed.");
+            logger.info("Successfully migrated database from format 2 to format 3");
+        } catch (Exception e) {
+            logger.error("Error while migrating database from format 2 to format 3", e);
+            if (backupDatabaseFile != null && backupDatabaseFile.exists()) {
+                logger.info("Restoring database file {} from backup {}", databaseFile, backupDatabaseFile);
+                Files.move(backupDatabaseFile.toPath(), databaseFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            }
+            throw e;
+        }
+    }
+
+    private static void exportDatabaseWithOldH2(String dbConnectionUrl, String javaExecutable, File h2OldJar, String scriptFilePath) throws IOException, InterruptedException {
+        try {
+            runH2Command(Arrays.asList(javaExecutable, "-Xmx700M", "-cp", h2OldJar.toString(), "org.h2.tools.Script", "-url", dbConnectionUrl, "-user", "sa", "-password", "sa", "-script", scriptFilePath), "Database export failed.");
+        } catch (RuntimeException firstException) {
+            logger.info("Database export with password failed, retrying without password");
+            runH2Command(Arrays.asList(javaExecutable, "-Xmx700M", "-cp", h2OldJar.toString(), "org.h2.tools.Script", "-url", dbConnectionUrl, "-user", "sa", "-script", scriptFilePath), "Database export failed.");
         }
     }
 

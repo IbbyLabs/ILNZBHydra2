@@ -1,7 +1,7 @@
 ## Run from root folder (which contains core,misc, etc)
 # alpine doesn't work because we need libgc for the native image
 FROM ubuntu:22.04
-LABEL org.opencontainers.image.source="https://github.com/theotherp/nzbhydra2/"
+LABEL org.opencontainers.image.source="https://github.com/IbbyLabs/NZBHydra2/"
 WORKDIR /app
 
 RUN apt-get update
@@ -26,7 +26,7 @@ COPY core/bower_components/ /app/bower_components/
 COPY core/ui-src/ /ui-src/
 
 # RUN for file in releases/linux-amd64-release/target/*.zip; do unzip "$file" -d /app; done
-RUN curl -L -o repo.zip https://github.com/theotherp/nzbhydra2/releases/download/v6.2.1/nzbhydra2-6.2.1-generic.zip && \
+RUN curl -L -o repo.zip https://github.com/IbbyLabs/NZBHydra2/releases/download/v6.2.1/nzbhydra2-6.2.1-generic.zip && \
     unzip repo.zip -d /app && \
     rm repo.zip \
 

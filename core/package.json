@@ -72,7 +72,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/theotherp/nzbhydra2.git"
+    "url": "git+https://github.com/IbbyLabs/NZBHydra2.git"
   },
   "overrides": {
     "graceful-fs": "^4.2.11"
@@ -86,7 +86,7 @@
   "author": "TheOtherP",
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/theotherp/nzbhydra2/issues"
+    "url": "https://github.com/IbbyLabs/NZBHydra2/issues"
   },
-  "homepage": "https://github.com/theotherp/nzbhydra2#readme"
+  "homepage": "https://github.com/IbbyLabs/NZBHydra2#readme"
 }
